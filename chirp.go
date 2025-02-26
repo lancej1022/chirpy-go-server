@@ -3,14 +3,18 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 )
 
 func (cfg *apiConfig) handleChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
 	}
+	// type returnVals struct {
+	// 	Valid bool `json:"valid"`
+	// }
 	type returnVals struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -27,5 +31,21 @@ func (cfg *apiConfig) handleChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, returnVals{Valid: true})
+	respondWithJSON(w, http.StatusOK, returnVals{CleanedBody: removeProfanity(params.Body)})
+}
+
+func removeProfanity(input string) string {
+	bannedWords := map[string]bool{
+		"kerfuffle": true,
+		"sharbert":  true,
+		"fornax":    true,
+	}
+
+	split := strings.Fields(input)
+	for i, word := range split {
+		if bannedWords[strings.ToLower(word)] {
+			split[i] = "****"
+		}
+	}
+	return strings.Join(split, " ")
 }
