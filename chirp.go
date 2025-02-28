@@ -3,6 +3,7 @@ package main
 import (
 	"chirpy/internal/database"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -12,10 +13,10 @@ import (
 
 type Chirp struct {
 	ID        uuid.UUID `json:"id"`
-	Body      string    `json:"body"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	UserID    uuid.UUID `json:"user_id"`
+	Body      string    `json:"body"`
 }
 
 func (cfg *apiConfig) handleChirp(w http.ResponseWriter, r *http.Request) {
@@ -79,17 +80,38 @@ func (cfg *apiConfig) handleGetChirps(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Something went wrong when getting chirps", err)
 		return
 	}
-	chirpsResponse := make([]Chirp, len(chirps))
-	// TODO: there must be a better way than looping...?
+
+	chirpsResponse := []Chirp{}
 	for i, chirp := range chirps {
 		chirpsResponse[i] = Chirp{
 			ID:        chirp.ID,
-			Body:      chirp.Body,
 			CreatedAt: chirp.CreatedAt,
 			UpdatedAt: chirp.UpdatedAt,
 			UserID:    chirp.UserID,
+			Body:      chirp.Body,
 		}
 	}
 
 	respondWithJSON(w, http.StatusOK, chirpsResponse)
+}
+
+func (cfg *apiConfig) handleGetChirp(w http.ResponseWriter, r *http.Request) {
+	chirpId := r.PathValue("id")
+	if chirpId == "" {
+		respondWithError(w, http.StatusBadRequest, "Missing chirp ID", nil)
+		return
+	}
+	chirp, err := cfg.db.GetChirpById(r.Context(), uuid.MustParse(chirpId))
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, fmt.Sprintf("Could not find chirp with id: %s", chirpId), err)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, Chirp{
+		ID:        chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		UserID:    chirp.UserID,
+		Body:      chirp.Body,
+	})
 }
