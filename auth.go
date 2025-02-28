@@ -2,7 +2,6 @@ package main
 
 import (
 	"chirpy/internal/auth"
-	"chirpy/internal/database"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -10,13 +9,12 @@ import (
 	"github.com/google/uuid"
 )
 
-func (cfg *apiConfig) handleAddUser(w http.ResponseWriter, r *http.Request) {
-	// TODO: should this be shared with `auth.go`?
+func (cfg *apiConfig) handleLogin(w http.ResponseWriter, r *http.Request) {
+	// TODO: `parameters` and `returnVals` are duplicated here and in `users.go` -- should probably share a single definition
 	type parameters struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
-
 	type returnVals struct {
 		Id        uuid.UUID `json:"id"`
 		Email     string    `json:"email"`
@@ -32,22 +30,18 @@ func (cfg *apiConfig) handleAddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashedPass, err := auth.HashPassword(params.Password)
+	user, err := cfg.db.GetUserByEmail(r.Context(), params.Email)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Unable to generate password", err)
+		respondWithError(w, http.StatusUnauthorized, "Incorrect email or password.", err)
 		return
 	}
 
-	user, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
-		Email:          params.Email,
-		HashedPassword: hashedPass,
-	})
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Something went wrong when creating the user", err)
+	if ok := auth.CheckPasswordHash(params.Password, user.HashedPassword); ok != nil {
+		respondWithError(w, http.StatusUnauthorized, "Incorrect email or password.", err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, returnVals{
+	respondWithJSON(w, http.StatusOK, returnVals{
 		Id:        user.ID,
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,

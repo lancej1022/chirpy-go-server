@@ -2,9 +2,21 @@ package auth
 
 import "golang.org/x/crypto/bcrypt"
 
-// Hash the password using the bcrypt.GenerateFromPassword function. Bcrypt is a secure hash function that is intended for use with passwords.
 func HashPassword(password string) (string, error) {
-	bcrypt.GenerateFromPassword()
-	// TODO:
-	return "", nil
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+
+	return string(hashedPassword), nil
+}
+
+func CheckPasswordHash(password, hash string) error {
+	// TODO: is my order of hash/passwords wrong here?
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		return err
+	}
+	// nil means the passwors matched
+	return nil
 }
