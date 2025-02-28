@@ -12,11 +12,5 @@ func HashPassword(password string) (string, error) {
 }
 
 func CheckPasswordHash(password, hash string) error {
-	// TODO: is my order of hash/passwords wrong here?
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	if err != nil {
-		return err
-	}
-	// nil means the passwors matched
-	return nil
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }
