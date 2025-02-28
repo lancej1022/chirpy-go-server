@@ -18,10 +18,10 @@ func (cfg *apiConfig) handleAddUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type returnVals struct {
-		Id        uuid.UUID `json:"id"`
-		Email     string    `json:"email"`
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
+		Email     string    `json:"email"`
+		Id        uuid.UUID `json:"id"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
