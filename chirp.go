@@ -128,3 +128,39 @@ func (cfg *apiConfig) handleGetChirp(w http.ResponseWriter, r *http.Request) {
 		Body:      chirp.Body,
 	})
 }
+func (cfg *apiConfig) handleDeleteChirp(w http.ResponseWriter, r *http.Request) {
+	chirpId := r.PathValue("id")
+	if chirpId == "" {
+		respondWithError(w, http.StatusBadRequest, "Missing chirp ID", nil)
+		return
+	}
+
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Invalid authentication token", err)
+		return
+	}
+	userId, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Invalid authentication token", err)
+		return
+	}
+
+	chirp, err := cfg.db.GetChirpById(r.Context(), uuid.MustParse(chirpId))
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, fmt.Sprintf("Could not find chirp with id: %s", chirpId), err)
+		return
+	}
+	if chirp.UserID != userId {
+		respondWithError(w, http.StatusForbidden, "You are not allowed to delete this chirp", nil)
+		return
+	}
+
+	err = cfg.db.DeleteChirp(r.Context(), chirp.ID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Something went wrong when deleting chirp", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
