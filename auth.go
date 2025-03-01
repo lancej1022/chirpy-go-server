@@ -22,6 +22,7 @@ func (cfg *apiConfig) handleLogin(w http.ResponseWriter, r *http.Request) {
 		Token        string    `json:"token"`
 		RefreshToken string    `json:"refresh_token"`
 		Id           uuid.UUID `json:"id"`
+		IsChirpyRed  bool      `json:"is_chirpy_red"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -69,6 +70,7 @@ func (cfg *apiConfig) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	respondWithJSON(w, http.StatusOK, returnVals{
 		Id:           user.ID,
+		IsChirpyRed:  user.IsChirpyRed,
 		Email:        user.Email,
 		CreatedAt:    user.CreatedAt,
 		UpdatedAt:    user.UpdatedAt,

@@ -1,6 +1,12 @@
 POST http://localhost:8080/api/validate_chirp HTTP/1.1
 content-type: application/json
+# set Authorization headers
+Authorization: "ApiKey f271c81ff7084ee5b99a5091b42d486e"
 
 {
-    "body": "sample kerfuffle! text"
+  "data": {
+    "user_id": "${userID}"
+  },
+  "event": "user.upgraded"
 }
+
