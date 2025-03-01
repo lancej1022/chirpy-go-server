@@ -88,13 +88,33 @@ func removeProfanity(input string) string {
 }
 
 func (cfg *apiConfig) handleGetChirps(w http.ResponseWriter, r *http.Request) {
-	chirps, err := cfg.db.GetChirps(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Something went wrong when getting chirps", err)
+	authorId := r.URL.Query().Get("author_id")
+
+	var getChirpsErr error
+	var chirps []database.Chirp
+
+	if authorId != "" {
+		authorId, err := uuid.Parse(authorId)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "Invalid author ID", err)
+		}
+
+		chirps, getChirpsErr = cfg.db.GetChirpsByUserId(r.Context(), authorId)
+	} else {
+		chirps, getChirpsErr = cfg.db.GetChirps(r.Context())
+	}
+
+	if getChirpsErr != nil {
+		respondWithError(w, http.StatusInternalServerError, "Something went wrong when getting chirps", getChirpsErr)
 		return
 	}
 
-	chirpsResponse := []Chirp{}
+	if len(chirps) == 0 {
+		respondWithJSON(w, http.StatusOK, []Chirp{})
+		return
+	}
+
+	chirpsResponse := make([]Chirp, len(chirps))
 	for i, chirp := range chirps {
 		chirpsResponse[i] = Chirp{
 			ID:        chirp.ID,
