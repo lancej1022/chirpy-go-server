@@ -25,10 +25,9 @@ func (cfg *apiConfig) handleChirp(w http.ResponseWriter, r *http.Request) {
 		Body string `json:"body"`
 	}
 
-	// Extract and validate JWT
 	token, err := auth.GetBearerToken(r.Header)
+
 	if err != nil {
-		// respondWithError(w, http.StatusUnauthorized, "Invalid authentication token", err)
 		respondWithError(w, http.StatusUnauthorized, "Invalid authentication token", err)
 		return
 	}
